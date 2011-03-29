@@ -1,0 +1,37 @@
+<component>
+  <fileSets>
+    <fileSet>
+	  <directory>src/main/resources/META-INF</directory>
+	  <outputDirectory>META-INF</outputDirectory>
+    </fileSet>
+  </fileSets>
+  <dependencySets>
+    <dependencySet>
+       <useTransitiveDependencies>false</useTransitiveDependencies>
+       <includes>
+          <include>org.switchyard:switchyard-common-xml</include>
+          <include>org.switchyard:switchyard-config</include>
+          <include>org.switchyard:switchyard-api</include>
+          <include>org.switchyard:switchyard-extensions-wsdl</include>
+          <include>org.switchyard:switchyard-transform</include>
+          <include>org.switchyard:switchyard-runtime</include>
+          <include>org.switchyard:switchyard-deploy</include>
+          <include>org.switchyard:switchyard-deploy-jboss-as6</include>
+       </includes>
+       <outputDirectory>/</outputDirectory>
+    </dependencySet>
+    <dependencySet>
+       <useTransitiveDependencies>false</useTransitiveDependencies>
+       <includes>
+           <include>org.milyn:milyn-smooks-all</include>
+           <include>com.thoughtworks.xstream:xstream</include>
+           <include>org.mvel:mvel2</include>
+           <include>org.freemarker:freemarker</include>
+           <include>jaxen:jaxen</include>
+           <include>commons-lang:commons-lang</include>
+           <include>commons-logging:commons-logging</include>
+       </includes>
+       <outputDirectory>/</outputDirectory>
+    </dependencySet>
+  </dependencySets>
+</component>
