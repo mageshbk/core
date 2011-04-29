@@ -227,6 +227,8 @@ public final class Classes {
         if (cl != null) {
             loaders.add(cl);
         }
+        // add ourself too
+        loaders.add(loader);
         return loaders;
     }
 

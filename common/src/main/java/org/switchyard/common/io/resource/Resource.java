@@ -56,6 +56,24 @@ public abstract class Resource<R> {
     }
 
     /**
+     * Safely pulls a resource from a path using {@link org.switchyard.common.type.Classes#getResourceAsStream(String, Class)}.
+     * @param resource the path to the resource
+     * @return the resource, or null if not found
+     * @throws IOException if a problem occurred
+     */
+    public R pull(String resource, ClassLoader cl) throws IOException {
+                InputStream is = Classes.getResourceAsStream(resource, cl);
+        if (is != null) {
+            try {
+                return pull(is);
+            } finally {
+                is.close();
+            }
+        }
+        return null;
+    }
+
+    /**
      * Safely pulls a resource from a URI.
      * @param uri the URI to the resource
      * @return the resource, or null if not found

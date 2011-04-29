@@ -72,35 +72,25 @@ public final class Descriptor {
     /** The "marshaller" property. */
     public static final String MARSHALLER = "marshaller";
 
-    private Map<String,String> _all_properties_map = new TreeMap<String,String>();
-    private Map<String,Map<String,String>> _prefix_config_map = new HashMap<String,Map<String,String>>();
-    private Map<String,String> _namespace_prefix_map = new HashMap<String,String>();
+    private static Map<String,String> _all_properties_map = new TreeMap<String,String>();
+    private static Map<String,Map<String,String>> _prefix_config_map = new HashMap<String,Map<String,String>>();
+    private static Map<String,String> _namespace_prefix_map = new HashMap<String,String>();
 
-    private Map<Set<String>,Schema> _namespaces_schema_map = new HashMap<Set<String>,Schema>();;
-    private Map<String,Marshaller> _namespace_marshaller_map = new HashMap<String,Marshaller>();
+    private static Map<Set<String>,Schema> _namespaces_schema_map = new HashMap<Set<String>,Schema>();;
+    private static Map<String,Marshaller> _namespace_marshaller_map = new HashMap<String,Marshaller>();
 
     /**
      * Constructs a new Descriptor based on discovered default properties.
      */
     public Descriptor() {
         String dp = DEFAULT_PROPERTIES.substring(1);
-        Properties props = new Properties();
-        PropertiesResource props_res = new PropertiesResource();
         try {
             List<URL> urls = Classes.getResources(dp, Descriptor.class);
-            for (URL url : urls) {
-                Properties url_props = props_res.pull(url);
-                Enumeration<?> pn_enum = url_props.propertyNames();
-                while (pn_enum.hasMoreElements()) {
-                    String pn = (String)pn_enum.nextElement();
-                    props.setProperty(pn, url_props.getProperty(pn));
-                }
-            }
+            addProperties(urls);
         } catch (IOException ioe) {
             // should never happen
             throw new RuntimeException(ioe);
         }
-        setProperties(props);
     }
 
     /**
@@ -108,6 +98,20 @@ public final class Descriptor {
      * @param props the Properties
      */
     public Descriptor(Properties props) {
+        setProperties(props);
+    }
+
+    public void addProperties(List<URL> urls) throws IOException {
+        Properties props = new Properties();
+        PropertiesResource props_res = new PropertiesResource();
+        for (URL url : urls) {
+            Properties url_props = props_res.pull(url);
+            Enumeration<?> pn_enum = url_props.propertyNames();
+            while (pn_enum.hasMoreElements()) {
+                String pn = (String)pn_enum.nextElement();
+                props.setProperty(pn, url_props.getProperty(pn));
+            }
+        }
         setProperties(props);
     }
 
@@ -424,7 +428,7 @@ public final class Descriptor {
             String schemaLocation = _descriptor.getSchemaLocation(namespaceURI, systemId);
             if (schemaLocation != null) {
                 try {
-                    String xsd = new StringResource().pull(schemaLocation);
+                    String xsd = new StringResource().pull(schemaLocation, getClass().getClassLoader());
                     if (xsd != null) {
                         return new DescriptorLSInput(xsd, publicId, systemId, baseURI);
                     }

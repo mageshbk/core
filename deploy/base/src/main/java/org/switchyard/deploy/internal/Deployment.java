@@ -179,6 +179,18 @@ public class Deployment extends AbstractDeployment {
         }
     }
 
+    /**
+     * Add a portable activator.
+     * 
+     * @param activator
+     */
+    public void addActivator(Activator activator) {
+        Collection<String> activationTypes = activator.getActivationTypes();
+        for (String type : activationTypes) {
+            _activators.put(type, activator);
+        }
+    }
+
     private void registerTransformers() {
         _log.debug("Registering configured Transformers ...");
         TransformsModel transforms = getConfig().getTransforms();

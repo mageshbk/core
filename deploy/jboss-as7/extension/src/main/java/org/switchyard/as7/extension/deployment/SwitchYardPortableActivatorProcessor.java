@@ -19,27 +19,28 @@
 package org.switchyard.as7.extension.deployment;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ServiceLoader;
 
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
-import org.jboss.as.server.deployment.module.ResourceRoot;
-import org.jboss.vfs.VirtualFile;
+import org.jboss.modules.Module;
 import org.switchyard.as7.extension.SwitchYardDeploymentMarker;
-import org.switchyard.config.model.ModelResource;
-import org.switchyard.config.model.switchyard.SwitchYardModel;
+import org.switchyard.common.type.Classes;
+import org.switchyard.config.model.Descriptor;
+import org.switchyard.deploy.Activator;
 
 /**
- * DU processor that finds <literal>switchyard.xml</literal> file and attaches the information to the deployment.
+ * Deployment processor that loads SwitchYard's portable activators.
  * 
  * @author Magesh Kumar B <mageshbk@jboss.com> (C) 2011 Red Hat Inc.
  */
-public class SwitchYardConfigDeploymentProcessor implements DeploymentUnitProcessor {
-
-    private static final String SWITCHYARD_XML = "META-INF/switchyard.xml";
+public class SwitchYardPortableActivatorProcessor implements DeploymentUnitProcessor {
 
     /* (non-Javadoc)
      * @see org.jboss.as.server.deployment.DeploymentUnitProcessor#deploy(org.jboss.as.server.deployment.DeploymentPhaseContext)
@@ -47,19 +48,22 @@ public class SwitchYardConfigDeploymentProcessor implements DeploymentUnitProces
     @Override
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         final DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
-        final ResourceRoot deploymentRoot = deploymentUnit.getAttachment(Attachments.DEPLOYMENT_ROOT);
-        final VirtualFile switchyardXml = deploymentRoot.getRoot().getChild(SWITCHYARD_XML);
-
-        if (!switchyardXml.exists()) {
+        final Module module = deploymentUnit.getAttachment(Attachments.MODULE);
+        if (!SwitchYardDeploymentMarker.isSwitchYardDeployment(deploymentUnit)) {
             return;
         }
-        final String archiveName = deploymentUnit.getName();
-        final String deploymentName = archiveName.substring(0, archiveName.lastIndexOf('.'));
-        final SwitchYardMetaData switchYardMetaData = new SwitchYardMetaData(archiveName, deploymentName);
-        switchYardMetaData.setSwitchYardFile(switchyardXml);
+        loadAttachments(module, deploymentUnit);
 
-        deploymentUnit.putAttachment(SwitchYardMetaData.ATTACHMENT_KEY, switchYardMetaData);
-        SwitchYardDeploymentMarker.mark(deploymentUnit);
+    }
+
+    private void loadAttachments(Module module, DeploymentUnit deploymentUnit) {
+        // now load extensions
+        final ServiceLoader<Activator> loader = ServiceLoader.load(Activator.class, module.getClassLoader());
+        final Iterator<Activator> iterator = loader.iterator();
+        while (iterator.hasNext()) {
+            Activator activator = iterator.next();
+            deploymentUnit.addToAttachmentList(SwitchYardAttachments.PORTABLE_ACTIVATORS, activator);
+        }
     }
 
     /* (non-Javadoc)
@@ -67,6 +71,8 @@ public class SwitchYardConfigDeploymentProcessor implements DeploymentUnitProces
      */
     @Override
     public void undeploy(DeploymentUnit context) {
+        // TODO Auto-generated method stub
+
     }
 
 }
