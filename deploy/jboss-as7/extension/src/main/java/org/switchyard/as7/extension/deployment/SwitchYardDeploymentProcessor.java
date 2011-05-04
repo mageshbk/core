@@ -18,11 +18,6 @@
  */
 package org.switchyard.as7.extension.deployment;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.List;
-
 import org.jboss.as.ee.naming.NamespaceSelectorService;
 import org.jboss.as.naming.context.NamespaceContextSelector;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
@@ -37,11 +32,6 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
 import org.switchyard.as7.extension.SwitchYardDeploymentMarker;
 import org.switchyard.as7.extension.services.SwitchYardService;
-import org.switchyard.common.type.Classes;
-import org.switchyard.config.model.Descriptor;
-import org.switchyard.config.model.ModelResource;
-import org.switchyard.config.model.switchyard.SwitchYardModel;
-import org.switchyard.deploy.Activator;
 
 /**
  * Deployment processor that installs the SwitchYard service and all other dependent services.
@@ -62,10 +52,6 @@ public class SwitchYardDeploymentProcessor implements DeploymentUnitProcessor {
 
         SwitchYardMetaData metaData = deploymentUnit.getAttachment(SwitchYardMetaData.ATTACHMENT_KEY);
         SwitchYardDeployment deployment = new SwitchYardDeployment(deploymentUnit, metaData.geSwitchYardModel());
-        List<Activator> activators = deploymentUnit.getAttachmentList(SwitchYardAttachments.PORTABLE_ACTIVATORS);
-        for (Activator activator: activators) {
-            deployment.addActivator(activator);
-        }
         SwitchYardService container = new SwitchYardService(deployment);
         final ServiceTarget serviceTarget = phaseContext.getServiceTarget();
         final ServiceName switchyardServiceName = deploymentUnit.getServiceName().append(SwitchYardService.SERVICE_NAME);

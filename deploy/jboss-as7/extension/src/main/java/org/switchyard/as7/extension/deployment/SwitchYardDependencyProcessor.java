@@ -29,7 +29,6 @@ import org.jboss.as.server.deployment.module.ModuleDependency;
 import org.jboss.as.server.deployment.module.ModuleSpecification;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
-import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
 import org.switchyard.as7.extension.SwitchYardDeploymentMarker;
 
@@ -67,23 +66,16 @@ public class SwitchYardDependencyProcessor implements DeploymentUnitProcessor {
         if (!SwitchYardDeploymentMarker.isSwitchYardDeployment(deploymentUnit)) {
             return;
         }
+
         final ModuleLoader moduleLoader = Module.getBootModuleLoader();
-        try {
-            final ModuleLoader configLoader = Module.getModuleFromCallerModuleLoader(SWITCHYARD_CONFIG_ID).getModuleLoader();
-            moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_ID, false, false, true));
-            moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_API_ID, false, false, false));
-            moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_COMMON_ID, false, false, false));
-            moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_CONFIG_ID, false, false, false));
-            moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_RUNTIME_ID, false, false, true));
-            moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_TRANSFORM_ID, false, false, false));
-            // This doesn't work
-            //moduleSpecification.addDependency(new ModuleDependency(configLoader, SWITCHYARD_TRANSFORM_ID, false, false, false));
-            for (ModuleIdentifier module: _componentModules) {
-                moduleSpecification.addDependency(new ModuleDependency(moduleLoader, module, false, false, true));
-                //moduleSpecification.addDependency(new ModuleDependency(configLoader, module, false, false, true));
-            }
-        } catch (ModuleLoadException e) {
-            e.printStackTrace();
+        moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_ID, false, false, true));
+        moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_API_ID, false, false, false));
+        moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_COMMON_ID, false, false, false));
+        moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_CONFIG_ID, false, false, false));
+        moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_RUNTIME_ID, false, false, true));
+        moduleSpecification.addDependency(new ModuleDependency(moduleLoader, SWITCHYARD_TRANSFORM_ID, false, false, false));
+        for (ModuleIdentifier moduleId : _componentModules) {
+            moduleSpecification.addDependency(new ModuleDependency(moduleLoader, moduleId, false, false, true));
         }
     }
 

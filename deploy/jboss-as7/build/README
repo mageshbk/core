@@ -17,14 +17,13 @@ SwitchYard AS7 Deployment stuff
 3. To add a component extract the contents of components/{component}/build/target/switchyard.deployer.zip to JBoss AS7 root directory
 4. Add the component modules
 
-    <subsystem xmlns="urn:jboss:domain:switchyard:1.0">
-        <modules>
-            <module identifier="org.switchyard.component.bean"/>
-            <module identifier="org.switchyard.component.soap"/>
-        </modules>
-    <subsystem>
+        <subsystem xmlns="urn:jboss:domain:switchyard:1.0">
+            <modules>
+                <module identifier="org.switchyard.component.bean"/>
+                <module identifier="org.switchyard.component.soap"/>
+                <module identifier="org.switchyard.component.camel"/>
+            </modules>
+        </subsystem>
 
 5. Deploy m1app
 6. Test with soapUI client
-
-PS: Need to test camel. Haven't deployed camel app yet.

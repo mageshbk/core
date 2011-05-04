@@ -27,15 +27,25 @@ import java.util.Map;
  */
 public enum Element {
 
+    /**
+     * unknown element.
+     */
     UNKNOWN(null),
-    MODULES("modules"),
-    MODULE("module"),
-    ;
 
-    private final String name;
+    /**
+     * modules element.
+     */
+    MODULES("modules"),
+
+    /**
+     * module element.
+     */
+    MODULE("module");
+
+    private final String _name;
 
     Element(final String name) {
-        this.name = name;
+        _name = name;
     }
 
     /**
@@ -44,7 +54,7 @@ public enum Element {
      * @return the local name
      */
     public String getLocalName() {
-        return name;
+        return _name;
     }
 
     private static final Map<String, Element> MAP;
@@ -53,13 +63,30 @@ public enum Element {
         final Map<String, Element> map = new HashMap<String, Element>();
         for (Element element : values()) {
             final String name = element.getLocalName();
-            if (name != null) map.put(name, element);
+            if (name != null) {
+                map.put(name, element);
+            }
         }
         MAP = map;
     }
 
+    /**
+     * Returns the Element for a given local name.
+     * 
+     * @param localName the local name
+     * @return the Element
+     */
     public static Element forName(String localName) {
         final Element element = MAP.get(localName);
         return element == null ? UNKNOWN : element;
+    }
+
+    /**
+     * Return the string representation of this Element.
+     * 
+     * @return the string form
+     */
+    public String toString() {
+        return getLocalName();
     }
 }

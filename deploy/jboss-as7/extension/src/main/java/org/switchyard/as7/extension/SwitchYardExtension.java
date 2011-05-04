@@ -94,21 +94,20 @@ public class SwitchYardExtension implements Extension {
         /** {@inheritDoc} */
         @Override
         public void readElement(final XMLExtendedStreamReader reader, final List<ModelNode> list) throws XMLStreamException {
-            // Require no attributes or content
+            // Require no attributes
             requireNoAttributes(reader);
             ModelNode subsytem = createAddSubSystemOperation();
             // Elements
             while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
-                if(reader.getNamespaceURI().equals(SwitchYardExtension.NAMESPACE)) {
+                if (reader.getNamespaceURI().equals(SwitchYardExtension.NAMESPACE)) {
                     final Element element = Element.forName(reader.getLocalName());
                     switch (element) {
-                        case MODULES: {
+                        case MODULES: 
                             ModelNode modules = parseModulesElement(reader);
                             if (modules != null) {
                                 subsytem.get(MODULES).set(modules);
                             }
                             break;
-                        }
                         default:
                             throw unexpectedElement(reader);
                     }
@@ -152,26 +151,28 @@ public class SwitchYardExtension implements Extension {
                 if (reader.getNamespaceURI().equals(SwitchYardExtension.NAMESPACE)) {
                     final Element element = Element.forName(reader.getLocalName());
                     if (element == Element.MODULE) {
-                        if (modules == null)
+                        if (modules == null) {
                             modules = new ModelNode();
+                        }
                         String identifier = null;
                         final int count = reader.getAttributeCount();
                         for (int i = 0; i < count; i++) {
                             requireNoNamespaceAttribute(reader, i);
                             final Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
                             switch (attribute) {
-                                case IDENTIFIER: {
+                                case IDENTIFIER:
                                     identifier = reader.getAttributeValue(i);
                                     break;
-                                }
                                 default:
                                     throw unexpectedAttribute(reader, i);
                             }
                         }
-                        if (identifier == null)
+                        if (identifier == null) {
                             throw missingRequired(reader, Collections.singleton(Attribute.IDENTIFIER));
-                        if (modules.has(identifier))
+                        }
+                        if (modules.has(identifier)) {
                             throw new XMLStreamException(element.getLocalName() + " already declared", reader.getLocation());
+                        }
 
                         ModelNode module = new ModelNode();
                         modules.get(identifier).set(module);

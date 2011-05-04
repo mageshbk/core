@@ -24,5 +24,8 @@ package org.switchyard.as7.extension;
  */
 public interface CommonAttributes {
 
+    /**
+     * The component modules attribute.
+     */
     String MODULES = "modules";
 }

@@ -26,13 +26,20 @@ import java.util.Map;
  *
  */
 public enum Attribute {
+    /**
+     * unknown attribute.
+     */
     UNKNOWN(null),
-    IDENTIFIER("identifier"),
-    ;
-    private final String name;
+
+    /**
+     * identifier attribute.
+     */
+    IDENTIFIER("identifier");
+
+    private final String _name;
 
     Attribute(final String name) {
-        this.name = name;
+        _name = name;
     }
 
     /**
@@ -41,7 +48,7 @@ public enum Attribute {
      * @return the local name
      */
     public String getLocalName() {
-        return name;
+        return _name;
     }
 
     private static final Map<String, Attribute> MAP;
@@ -50,16 +57,29 @@ public enum Attribute {
         final Map<String, Attribute> map = new HashMap<String, Attribute>();
         for (Attribute element : values()) {
             final String name = element.getLocalName();
-            if (name != null) map.put(name, element);
+            if (name != null) {
+                map.put(name, element);
+            }
         }
         MAP = map;
     }
 
+    /**
+     * Returns the Attribute for a given local name.
+     * 
+     * @param localName the local name
+     * @return the Attribute
+     */
     public static Attribute forName(String localName) {
         final Attribute element = MAP.get(localName);
         return element == null ? UNKNOWN : element;
     }
 
+    /**
+     * Return the string representation of this Attribute.
+     * 
+     * @return the string form
+     */
     public String toString() {
         return getLocalName();
     }

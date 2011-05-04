@@ -72,12 +72,12 @@ public final class Descriptor {
     /** The "marshaller" property. */
     public static final String MARSHALLER = "marshaller";
 
-    private static Map<String,String> _all_properties_map = new TreeMap<String,String>();
-    private static Map<String,Map<String,String>> _prefix_config_map = new HashMap<String,Map<String,String>>();
-    private static Map<String,String> _namespace_prefix_map = new HashMap<String,String>();
+    private Map<String,String> _all_properties_map = new TreeMap<String,String>();
+    private Map<String,Map<String,String>> _prefix_config_map = new HashMap<String,Map<String,String>>();
+    private Map<String,String> _namespace_prefix_map = new HashMap<String,String>();
 
-    private static Map<Set<String>,Schema> _namespaces_schema_map = new HashMap<Set<String>,Schema>();;
-    private static Map<String,Marshaller> _namespace_marshaller_map = new HashMap<String,Marshaller>();
+    private Map<Set<String>,Schema> _namespaces_schema_map = new HashMap<Set<String>,Schema>();;
+    private Map<String,Marshaller> _namespace_marshaller_map = new HashMap<String,Marshaller>();
 
     /**
      * Constructs a new Descriptor based on discovered default properties.

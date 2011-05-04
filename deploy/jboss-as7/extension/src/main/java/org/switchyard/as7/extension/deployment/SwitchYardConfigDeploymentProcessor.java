@@ -18,9 +18,6 @@
  */
 package org.switchyard.as7.extension.deployment;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -29,8 +26,6 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.module.ResourceRoot;
 import org.jboss.vfs.VirtualFile;
 import org.switchyard.as7.extension.SwitchYardDeploymentMarker;
-import org.switchyard.config.model.ModelResource;
-import org.switchyard.config.model.switchyard.SwitchYardModel;
 
 /**
  * DU processor that finds <literal>switchyard.xml</literal> file and attaches the information to the deployment.

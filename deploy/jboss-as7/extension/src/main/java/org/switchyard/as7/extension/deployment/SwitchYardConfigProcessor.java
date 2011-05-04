@@ -21,10 +21,12 @@ package org.switchyard.as7.extension.deployment;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
+import org.jboss.modules.Module;
 import org.switchyard.as7.extension.SwitchYardDeploymentMarker;
 import org.switchyard.config.model.ModelResource;
 import org.switchyard.config.model.switchyard.SwitchYardModel;
@@ -45,13 +47,19 @@ public class SwitchYardConfigProcessor implements DeploymentUnitProcessor {
         }
         SwitchYardMetaData switchYardMetaData = deploymentUnit.getAttachment(SwitchYardMetaData.ATTACHMENT_KEY);
 
+
+        ClassLoader origCL = Thread.currentThread().getContextClassLoader();
         try {
+            final Module module = deploymentUnit.getAttachment(Attachments.MODULE);
+            Thread.currentThread().setContextClassLoader(module.getClassLoader());
             InputStream is = switchYardMetaData.getSwitchYardFile().openStream();
             SwitchYardModel switchyardModel = new ModelResource<SwitchYardModel>().pull(is);
             is.close();
             switchYardMetaData.setSwitchYardModel(switchyardModel);
         } catch (IOException ioe) {
             throw new DeploymentUnitProcessingException(ioe);
+        } finally {
+            Thread.currentThread().setContextClassLoader(origCL);
         }
 
     }
