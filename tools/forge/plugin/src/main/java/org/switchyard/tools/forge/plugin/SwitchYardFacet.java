@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.xml.namespace.QName;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.PluginExecution;
@@ -154,6 +155,23 @@ public class SwitchYardFacet extends AbstractFacet {
         for (ComponentModel component : getMergedSwitchYardConfig().getComposite().getComponents()) {
             for (ComponentServiceModel service : component.getServices()) {
                 if (service.getName().equals(name)) {
+                    return service;
+                }
+            }
+        }
+        // no matching service
+        return null;
+    }
+    
+    /**
+     * Retrieve the component service config for the specified service QName.
+     * @param name component service QName
+     * @return component service config fragment, or null if the service does not exist
+     */
+    public ComponentServiceModel getComponentService(QName name) {
+        for (ComponentModel component : getMergedSwitchYardConfig().getComposite().getComponents()) {
+            for (ComponentServiceModel service : component.getServices()) {
+                if (service.getQName().equals(name)) {
                     return service;
                 }
             }

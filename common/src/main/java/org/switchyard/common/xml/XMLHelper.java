@@ -460,7 +460,7 @@ public final class XMLHelper {
      * @return the new document
      * @throws ParserConfigurationException for errors during creation
      */
-    private static Document getNewDocument()
+    public static Document getNewDocument()
         throws ParserConfigurationException {
         final DocumentBuilder builder = getCreationDocumentBuilder();
         synchronized (builder) {
