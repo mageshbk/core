@@ -34,7 +34,17 @@ public enum Attribute {
     /**
      * identifier attribute.
      */
-    IDENTIFIER("identifier");
+    IDENTIFIER("identifier"),
+
+    /**
+     * name attribute.
+     */
+    NAME("name"),
+
+    /**
+     * value attribute.
+     */
+    VALUE("value");
 
     private final String _name;
 

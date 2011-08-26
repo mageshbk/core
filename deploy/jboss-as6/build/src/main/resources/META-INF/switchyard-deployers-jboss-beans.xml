@@ -28,6 +28,12 @@
     <bean name="SwitchYardConfigParser" class="org.switchyard.deployment.SwitchYardConfigParser" />
     <bean name="SwitchYardDeployer" class="org.switchyard.deployment.SwitchYardDeployer">
         <property name="domainManager"><inject bean="SwitchYardServiceDomainManager"/></property>
+        <property name="properties">
+            <map class="java.util.Hashtable" keyClass="java.lang.String" valueClass="java.lang.String">
+                <entry><key>org.switchyard.component.soap.serverHost</key><value>localhost</value></entry>
+                <entry><key>org.switchyard.component.soap.serverPort</key><value>18001</value></entry>
+            </map>
+        </property>
     </bean>
 
 </deployment>

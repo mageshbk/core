@@ -21,6 +21,8 @@ package org.switchyard.deployment;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
+import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.jboss.beans.metadata.spi.BeanMetaData;
@@ -30,6 +32,7 @@ import org.jboss.deployers.spi.deployer.DeploymentStages;
 import org.jboss.deployers.structure.spi.DeploymentUnit;
 import org.jboss.deployers.vfs.spi.deployer.AbstractSimpleVFSRealDeployer;
 import org.jboss.deployers.vfs.spi.structure.VFSDeploymentUnit;
+import org.switchyard.config.Environment;
 import org.switchyard.config.model.ModelPuller;
 import org.switchyard.config.model.switchyard.SwitchYardModel;
 import org.switchyard.deploy.ServiceDomainManager;
@@ -45,6 +48,8 @@ public class SwitchYardDeployer extends AbstractSimpleVFSRealDeployer<SwitchYard
 
     private ServiceDomainManager _domainManager;
 
+    private Properties _properties = new Properties();
+
     /**
      * No args constructor.
      */
@@ -52,6 +57,15 @@ public class SwitchYardDeployer extends AbstractSimpleVFSRealDeployer<SwitchYard
         super(SwitchYardMetaData.class);
         setOutput(BeanMetaData.class);
         setStage(DeploymentStages.REAL);
+        Environment.setProperties(_properties);
+    }
+
+    /**
+     * Set the {@link Properties} for the SwitchYard environment.
+     * @param properties The environment properties.
+     */
+    public void setProperties(Map<String, String> properties) {
+        this._properties.putAll(properties);
     }
 
     /**

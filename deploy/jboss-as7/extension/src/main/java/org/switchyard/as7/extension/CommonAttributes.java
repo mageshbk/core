@@ -28,4 +28,9 @@ public interface CommonAttributes {
      * The component modules attribute.
      */
     String MODULES = "modules";
+    
+    /**
+     * The component properties attribute.
+     */
+    String PROPERTIES = "properties";
 }

@@ -61,6 +61,9 @@ public final class SwitchYardSubsystemAdd extends AbstractBoottimeAddStepHandler
         if (operation.has(CommonAttributes.MODULES)) {
             submodel.get(CommonAttributes.MODULES).set(operation.get(CommonAttributes.MODULES));
         }
+        if (operation.has(CommonAttributes.PROPERTIES)) {
+            submodel.get(CommonAttributes.PROPERTIES).set(operation.get(CommonAttributes.PROPERTIES));
+        }
     }
 
     @Override
