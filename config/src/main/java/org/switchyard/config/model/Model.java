@@ -40,6 +40,16 @@ public interface Model {
     public Configuration getModelConfiguration();
 
     /**
+     * Get the environment configuration.
+     */
+    public Configuration getEnvironment();
+
+    /**
+     * Set the environment configuration. 
+     */
+    public void setEnvironment(Configuration config);
+
+    /**
      * Gets the Descriptor used to create this model.
      * @return the descriptor
      */

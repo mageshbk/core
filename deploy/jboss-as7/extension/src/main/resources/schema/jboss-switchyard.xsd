@@ -40,6 +40,7 @@
         </xs:annotation>
         <xs:all>
             <xs:element name="modules" type="modulesType" minOccurs="0"/>
+            <xs:element name="properties" type="propertiesType" use="optional"/>
         </xs:all>
     </xs:complexType>
 
@@ -51,6 +52,11 @@
 
     <xs:complexType name="moduleType">
         <xs:attribute name="identifier" type="xs:string" use="required"/>
+        <xs:element name="properties" type="propertiesType" use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="propertiesType">
+        <xs:any></xs:any>
     </xs:complexType>
 
 </xs:schema>

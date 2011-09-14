@@ -179,7 +179,7 @@ public class BaseSystemTest {
         }
 
         @Override
-        protected void doInit() {
+        protected void doInit(List<org.switchyard.deploy.Component> components) {
         }
 
         @Override

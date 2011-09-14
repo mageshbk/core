@@ -35,25 +35,26 @@ public abstract class BaseActivator implements Activator {
     
     private List<String> _activationTypes = new LinkedList<String>();
     private ServiceDomain _serviceDomain;
+    private Component _component;
 
     protected BaseActivator(String ... types) {
         if (types != null) {
             _activationTypes.addAll(Arrays.asList(types));
         }
     }
-
+    
     /**
-     * {@inheritDoc}
+     * Sets the service domain instance of this activator.
+     * @param serviceDomain the service domain
      */
-    @Override
     public void setServiceDomain(ServiceDomain serviceDomain) {
         _serviceDomain = serviceDomain;
     }
 
     /**
-     * {@inheritDoc}
+     * Gets the service domain instance of this activator.
+     * @return the service domain
      */
-    @Override
     public ServiceDomain getServiceDomain() {
         return _serviceDomain;
     }
@@ -73,5 +74,20 @@ public abstract class BaseActivator implements Activator {
     public Collection<String> getActivationTypes() {
         return Collections.unmodifiableList(_activationTypes);
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setComponent(Component component) {
+        _component = component;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Component getComponent() {
+        return _component;
+    }
 }

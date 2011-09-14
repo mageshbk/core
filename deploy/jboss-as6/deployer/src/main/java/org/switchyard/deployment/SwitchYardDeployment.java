@@ -19,9 +19,13 @@
 
 package org.switchyard.deployment;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jboss.deployers.vfs.spi.structure.VFSDeploymentUnit;
 import org.switchyard.ServiceDomain;
 import org.switchyard.config.model.switchyard.SwitchYardModel;
+import org.switchyard.deploy.Component;
 import org.switchyard.deploy.ServiceDomainManager;
 import org.switchyard.deploy.internal.Deployment;
 
@@ -71,7 +75,7 @@ public class SwitchYardDeployment {
         ClassLoader origCL = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(_deployUnit.getClassLoader());
-            _deployment.init(createDomain(_deployment.getConfig(), _domainManager));
+            _deployment.init(createDomain(_deployment.getConfig(), _domainManager), (List<Component>) _deployUnit.getAttachment("components"));
             _deployment.start();
         } finally {
             Thread.currentThread().setContextClassLoader(origCL);

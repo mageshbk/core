@@ -20,6 +20,7 @@
 package org.switchyard;
 
 import org.apache.log4j.Logger;
+import org.switchyard.deploy.Component;
 import org.switchyard.deploy.ServiceDomainManager;
 import org.switchyard.deploy.internal.AbstractDeployment;
 import org.switchyard.deploy.internal.Deployment;
@@ -28,6 +29,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 
 /**
  * SwitchYard main.
@@ -56,7 +60,8 @@ public class SwitchYard {
      */
     public void start() {
         _logger.debug("Starting SwitchYard application '" + _deployment.getConfig().getQName() + "'.");
-        _deployment.init(ServiceDomainManager.createDomain(_deployment.getConfig().getQName(), _deployment.getConfig()));
+        ServiceDomain serviceDomain = ServiceDomainManager.createDomain(_deployment.getConfig().getQName(), _deployment.getConfig());
+        _deployment.init(serviceDomain, createComponents());
         _deployment.start();
         _logger.debug("SwitchYard application '" + _deployment.getConfig().getQName() + "' started.");
     }
@@ -67,7 +72,25 @@ public class SwitchYard {
     public void stop() {
         _logger.debug("Stopping SwitchYard application '" + _deployment.getConfig().getQName() + "'.");
         _deployment.stop();
+        _deployment.destroy();
         _logger.debug("SwitchYard application '" + _deployment.getConfig().getQName() + "' stopped.");
+    }
+
+    /**
+     * Get the deployment associated with this instance.
+     * @return The deployment
+     */
+    public Deployment getDeployment() {
+        return _deployment;
+    }
+
+    private List<Component> createComponents() {
+        List<Component> components = new ArrayList<Component>();
+        ServiceLoader<Component> componentLoader = ServiceLoader.load(Component.class);
+        for (Component component : componentLoader) {
+            components.add(component);
+        }
+        return components;
     }
 
     /**

@@ -20,6 +20,8 @@
 package org.switchyard.deploy.internal;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.namespace.QName;
 
@@ -28,8 +30,10 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.switchyard.ServiceDomain;
 import org.switchyard.ServiceReference;
+import org.switchyard.SwitchYard;
 import org.switchyard.common.type.Classes;
 import org.switchyard.config.model.composite.CompositeServiceModel;
+import org.switchyard.deploy.Component;
 import org.switchyard.deploy.ServiceDomainManager;
 import org.switchyard.deploy.components.MockActivator;
 import org.switchyard.deploy.components.config.MockBindingModel;
@@ -49,27 +53,24 @@ public class DeploymentTest {
     @Test
     public void testEmptySwitchYardConfiguration() throws Exception {
         InputStream swConfigStream = Classes.getResourceAsStream("/switchyard-config-empty-01.xml", getClass());
-        Deployment deployment = new Deployment(swConfigStream);
+        SwitchYard switchyard = new SwitchYard(swConfigStream);
         swConfigStream.close();
 
-        deployment.init(ServiceDomainManager.createDomain());
-        deployment.destroy();
+        switchyard.start();
+        switchyard.stop();
     }
     
     @Test
     public void testActivators() throws Exception {
         InputStream swConfigStream = Classes.getResourceAsStream("/switchyard-config-mock-01.xml", getClass());
-        Deployment deployment = new Deployment(swConfigStream);
+        SwitchYard switchyard = new SwitchYard(swConfigStream);
         swConfigStream.close();
 
-        deployment.init(ServiceDomainManager.createDomain());
-        
+        switchyard.start();
         // Grab a reference to our activators
         MockActivator activator = (MockActivator)
-            deployment.findActivator(MockBindingModel.TYPE);
-        deployment.start();
-        deployment.stop();
-        deployment.destroy();
+            switchyard.getDeployment().findActivator(MockBindingModel.TYPE);
+        switchyard.stop();
 
         // Verify the activators were poked
         Assert.assertTrue(activator.initCalled());
@@ -81,33 +82,30 @@ public class DeploymentTest {
     @Test
     public void test_transform_registration() throws Exception {
         InputStream swConfigStream = Classes.getResourceAsStream("/switchyard-config-transform-01.xml", getClass());
-        Deployment deployment = new Deployment(swConfigStream);
+        SwitchYard switchyard = new SwitchYard(swConfigStream);
         swConfigStream.close();
 
-        deployment.init(ServiceDomainManager.createDomain());
-
+        switchyard.start();
         // Check that the transformers are deployed...
-        ServiceDomain domain = deployment.getDomain();
+        ServiceDomain domain = switchyard.getDeployment().getDomain();
         Transformer<?,?> abTransformer = domain.getTransformerRegistry().getTransformer(new QName("A"), new QName("B"));
         Transformer<?,?> cdTransformer = domain.getTransformerRegistry().getTransformer(new QName("C"), new QName("D"));
 
         Assert.assertTrue(abTransformer instanceof ABTransformer);
         Assert.assertTrue(cdTransformer instanceof CDTransformer);
 
-        deployment.destroy();
-
+        switchyard.stop();
         // Check that the transformers are undeployed...
     }
 
     @Test
     public void interfaceWSDL() throws Exception {
         InputStream swConfigStream = Classes.getResourceAsStream("/switchyard-config-interface-wsdl-01.xml", getClass());
-        Deployment deployment = new Deployment(swConfigStream);
+        SwitchYard switchyard = new SwitchYard(swConfigStream);
         swConfigStream.close();
-        deployment.init(ServiceDomainManager.createDomain());
-        deployment.start();
+        switchyard.start();
 
-        ServiceReference service = deployment.getDomain().getService(new QName("urn:switchyard-interface-wsdl", "HelloService"));
+        ServiceReference service = switchyard.getDeployment().getDomain().getService(new QName("urn:switchyard-interface-wsdl", "HelloService"));
         Assert.assertNotNull(service);
         ServiceInterface iface = service.getInterface();
         Assert.assertEquals(WSDLService.TYPE, iface.getType());
@@ -116,8 +114,7 @@ public class DeploymentTest {
         Assert.assertEquals(new QName("urn:switchyard-interface-wsdl", "sayHello"), op.getInputType());
         Assert.assertEquals(new QName("urn:switchyard-interface-wsdl", "sayHelloResponse"), op.getOutputType());
 
-        deployment.stop();
-        deployment.destroy();
+        switchyard.stop();
 
     }
     
@@ -129,9 +126,8 @@ public class DeploymentTest {
         // Load an app config which references a mock component, but provide no activator
         try {
             swConfigStream = Classes.getResourceAsStream("/switchyard-config-activator-01.xml", getClass());
-            Deployment deployment = new Deployment(swConfigStream);
-            deployment.init(ServiceDomainManager.createDomain());
-            deployment.start();
+            SwitchYard switchyard = new SwitchYard(swConfigStream);
+            switchyard.start();
         } catch (SwitchYardException sye) {
             exception = sye;
             System.err.println(sye.toString());
@@ -147,12 +143,11 @@ public class DeploymentTest {
     @Test
     public void testUnknownInterfaceClassName() throws Exception {
         InputStream swConfigStream = Classes.getResourceAsStream("/switchyard-config-unknown-interface.xml", getClass());
-        Deployment deployment = new Deployment(swConfigStream);
+        SwitchYard switchyard = new SwitchYard(swConfigStream);
         swConfigStream.close();
 
-        deployment.init(ServiceDomainManager.createDomain());
         try {
-            deployment.start();
+            switchyard.start();
             Assert.fail("Expected SwitchYardException");
         } catch (SwitchYardException e) {
             Assert.assertEquals("Failed to load Service interface class 'org.acme.Blah'.", e.getMessage());
@@ -162,16 +157,15 @@ public class DeploymentTest {
     @Test
     public void testNotifications() throws Exception {
         InputStream swConfigStream = Classes.getResourceAsStream("/switchyard-config-mock-01.xml", getClass());
-        Deployment deployment = new Deployment(swConfigStream);
+        SwitchYard switchyard = new SwitchYard(swConfigStream);
         swConfigStream.close();
 
         DeploymentListener listener = Mockito.mock(DeploymentListener.class);
-        deployment.addDeploymentListener(listener);
+        switchyard.getDeployment().addDeploymentListener(listener);
 
-        deployment.init(ServiceDomainManager.createDomain());
-        deployment.start();
-        deployment.stop();
-        deployment.destroy();
+        switchyard.start();
+        switchyard.stop();
+        Deployment deployment = switchyard.getDeployment();
 
         Mockito.verify(listener).initializing(deployment);
         Mockito.verify(listener).initialized(deployment);
@@ -188,8 +182,9 @@ public class DeploymentTest {
     @Test
     public void testListenerThrowing() throws Exception {
         InputStream swConfigStream = Classes.getResourceAsStream("/switchyard-config-mock-01.xml", getClass());
-        Deployment deployment = new Deployment(swConfigStream);
+        SwitchYard switchyard = new SwitchYard(swConfigStream);
         swConfigStream.close();
+        Deployment deployment = switchyard.getDeployment();
 
         DeploymentListener listener = Mockito.mock(DeploymentListener.class);
         Mockito.doThrow(new RuntimeException("error")).when(listener).initializing(deployment);
@@ -204,10 +199,8 @@ public class DeploymentTest {
         Mockito.doThrow(new RuntimeException("error")).when(listener).destroyed(deployment);
         deployment.addDeploymentListener(listener);
 
-        deployment.init(ServiceDomainManager.createDomain());
-        deployment.start();
-        deployment.stop();
-        deployment.destroy();
+        switchyard.start();
+        switchyard.stop();
 
         Mockito.verify(listener).initializing(deployment);
         Mockito.verify(listener).initialized(deployment);
@@ -234,7 +227,7 @@ public class DeploymentTest {
             }
             
             @Override
-            protected void doInit() {
+            protected void doInit(List<Component> components) {
             }
             
             @Override
@@ -242,7 +235,7 @@ public class DeploymentTest {
             }
         };
         
-        mock.init(ServiceDomainManager.createDomain());
+        mock.init(ServiceDomainManager.createDomain(), new ArrayList<Component>());
         mock.start();
         mock.stop();
         mock.destroy();

@@ -16,26 +16,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
  * MA  02110-1301, USA.
  */
+package org.switchyard.deploy.components;
 
-package org.switchyard.config.model.composite;
-
-import org.switchyard.config.Configuration;
-import org.switchyard.config.model.TypedModel;
+import org.switchyard.ServiceDomain;
+import org.switchyard.deploy.Activator;
+import org.switchyard.deploy.BaseComponent;
 
 /**
- * The "binding" configuration model.
- *
- * @author David Ward &lt;<a href="mailto:dward@jboss.org">dward@jboss.org</a>&gt; (C) 2011 Red Hat Inc.
+ * @author Magesh Kumar B <mageshbk@jboss.com> (C) 2011 Red Hat Inc.
  */
-public interface BindingModel extends TypedModel {
+public class MockComponent extends BaseComponent {
 
-    /** The "binding" name. */
-    public static final String BINDING = "binding";
+    public MockComponent() {
+        _name = "Mockcomponent";
+    }
 
-    /**
-     * Gets the parent composite model.
-     * @return the parent composite model
-     */
-    public CompositeServiceModel getService();
+    @Override
+    public Activator getActivator(ServiceDomain domain) {
+        return new MockActivator();
+    }
 
 }

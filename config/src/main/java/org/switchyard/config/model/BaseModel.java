@@ -42,6 +42,7 @@ public abstract class BaseModel implements Model {
     private final Configuration _config;
     private final Descriptor _desc;
     private Model _parent;
+    private Configuration _environment;
 
     protected BaseModel(QName qname) {
         this(new ConfigurationPuller().pull(qname));
@@ -62,6 +63,23 @@ public abstract class BaseModel implements Model {
     @Override
     public final Configuration getModelConfiguration() {
         return _config;
+    }
+
+    /**
+     * Get the environment configuration.
+     */
+    public final Configuration getEnvironment() {
+        if (_environment == null) {
+            _environment = new ConfigurationPuller().pull(new QName("properties"));
+        }
+        return _environment;
+    }
+
+    /**
+     * Set the environment configuration. 
+     */
+    public final void setEnvironment(Configuration config) {
+        _environment = config;
     }
 
     /**

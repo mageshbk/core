@@ -17,25 +17,19 @@
  * MA  02110-1301, USA.
  */
 
-package org.switchyard.config.model.composite;
+package org.switchyard.deploy;
 
+import org.switchyard.ServiceDomain;
 import org.switchyard.config.Configuration;
-import org.switchyard.config.model.TypedModel;
 
 /**
- * The "binding" configuration model.
- *
- * @author David Ward &lt;<a href="mailto:dward@jboss.org">dward@jboss.org</a>&gt; (C) 2011 Red Hat Inc.
+ * Components allow components to participate in the deployment and configuration lifecycle of
+ * a SwitchYard application.
  */
-public interface BindingModel extends TypedModel {
-
-    /** The "binding" name. */
-    public static final String BINDING = "binding";
-
-    /**
-     * Gets the parent composite model.
-     * @return the parent composite model
-     */
-    public CompositeServiceModel getService();
-
+public interface Component {
+    Activator getActivator(ServiceDomain domain);
+    String getName();
+    void init(Configuration config);
+    void destroy();
+    Configuration getConfiguration();
 }

@@ -32,6 +32,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ServiceLoader;
 
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -58,6 +59,7 @@ import org.switchyard.config.model.composite.CompositeModel;
 import org.switchyard.config.model.switchyard.SwitchYardModel;
 import org.switchyard.config.model.switchyard.v1.V1SwitchYardModel;
 import org.switchyard.config.model.transform.TransformModel;
+import org.switchyard.deploy.Component;
 import org.switchyard.deploy.ServiceDomainManager;
 import org.switchyard.deploy.internal.AbstractDeployment;
 import org.switchyard.deploy.internal.Deployment;
@@ -200,10 +202,20 @@ public class SwitchYardTestKit {
      */
     private final void deploy() throws Exception {
         _deployment = createDeployment();
-        _deployment.init(ServiceDomainManager.createDomain(
-                ServiceDomainManager.ROOT_DOMAIN, _deployment.getConfig()));
+        ServiceDomain domain = ServiceDomainManager.createDomain(
+                ServiceDomainManager.ROOT_DOMAIN, _deployment.getConfig());
+        _deployment.init(domain, createComponents());
         mixInBefore();
         _deployment.start();
+    }
+
+    private List<Component> createComponents() {
+        List<Component> components = new ArrayList<Component>();
+        ServiceLoader<Component> componentLoader = ServiceLoader.load(Component.class);
+        for (Component component : componentLoader) {
+            components.add(component);
+        }
+        return components;
     }
 
     /**

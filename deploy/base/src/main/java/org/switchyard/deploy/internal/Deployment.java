@@ -27,14 +27,12 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.Set;
 
 import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
 import org.switchyard.ExchangeHandler;
-import org.switchyard.ServiceDomain;
 import org.switchyard.ServiceReference;
 import org.switchyard.common.type.Classes;
 import org.switchyard.config.model.ModelPuller;
@@ -48,6 +46,7 @@ import org.switchyard.config.model.composite.InterfaceModel;
 import org.switchyard.config.model.switchyard.SwitchYardModel;
 import org.switchyard.config.model.transform.TransformsModel;
 import org.switchyard.deploy.Activator;
+import org.switchyard.deploy.Component;
 import org.switchyard.exception.SwitchYardException;
 import org.switchyard.extensions.wsdl.WSDLReaderException;
 import org.switchyard.extensions.wsdl.WSDLService;
@@ -100,11 +99,23 @@ public class Deployment extends AbstractDeployment {
     /**
      * Initialize the deployment.
      */
-    protected void doInit() {
+    protected void doInit(List<Component> components) {
         _log.debug("Initializing deployment " + getName());
         // create a new domain and load transformer and activator instances for lifecycle
         registerTransformers();
-        createActivators();
+        if (components != null) {
+            for (Component component : components) {
+                Activator activator = component.getActivator(getDomain());
+                Collection<String> activationTypes = activator.getActivationTypes();
+                if (activationTypes != null) {
+                    for (String type : activationTypes) {
+                        _log.debug("Registered activation type " + type
+                                + " for activator " + activator.getClass() + " on deployment " + getName());
+                        _activators.put(type, activator);
+                    }
+                }
+            }
+        }
     }
     
     /**
@@ -192,22 +203,6 @@ public class Deployment extends AbstractDeployment {
         }
         return findActivator(component.getImplementation().getType());
     }
-    
-    private void createActivators() {
-        ServiceDomain serviceDomain = getDomain();
-        ServiceLoader<Activator> activatorLoader = ServiceLoader.load(Activator.class);
-        for (Activator activator : activatorLoader) {
-            activator.setServiceDomain(serviceDomain);
-            Collection<String> activationTypes = activator.getActivationTypes();
-            if (activationTypes != null) {
-                for (String type : activationTypes) {
-                    _log.debug("Registered activation type " + type
-                            + " for activator " + activator.getClass() + " on deployment " + getName());
-                    _activators.put(type, activator);
-                }
-            }
-        }
-    }
 
     private void registerTransformers() {
         _log.debug("Registering configured Transformers for deployment " + getName());
@@ -219,23 +214,25 @@ public class Deployment extends AbstractDeployment {
     private void deployReferenceBindings() {
         _log.debug("Deploying reference bindings for deployment " + getName());
         // activate bindings for each service
-        for (CompositeReferenceModel reference : getConfig().getComposite().getReferences()) {
-            for (BindingModel binding : reference.getBindings()) {
-                QName refQName = reference.getQName();
-                _log.debug("Deploying binding " + binding.getType() + " for reference " + reference.getQName() + " for deployment " + getName());
-                
-                Activator activator = findActivator(binding.getType());
-                ExchangeHandler handler = activator.init(refQName, reference);
-                
-                ServiceInterface si = getReferenceInterface(reference);
-                ServiceReference serviceRef = si != null
-                        ? getDomain().registerService(refQName, handler, si)
-                        : getDomain().registerService(refQName, handler);
-                        
-                Activation activation = new Activation(serviceRef, activator);
-                activation.start();
-                
-                _referenceBindings.add(activation);
+        if (getConfig().getComposite() != null) {
+            for (CompositeReferenceModel reference : getConfig().getComposite().getReferences()) {
+                for (BindingModel binding : reference.getBindings()) {
+                    QName refQName = reference.getQName();
+                    _log.debug("Deploying binding " + binding.getType() + " for reference " + reference.getQName() + " for deployment " + getName());
+                    
+                    Activator activator = findActivator(binding.getType());
+                    ExchangeHandler handler = activator.init(refQName, reference);
+                    
+                    ServiceInterface si = getReferenceInterface(reference);
+                    ServiceReference serviceRef = si != null
+                            ? getDomain().registerService(refQName, handler, si)
+                            : getDomain().registerService(refQName, handler);
+                            
+                    Activation activation = new Activation(serviceRef, activator);
+                    activation.start();
+                    
+                    _referenceBindings.add(activation);
+                }
             }
         }
     }
@@ -301,41 +298,43 @@ public class Deployment extends AbstractDeployment {
         _log.debug("Deploying services for deployment " + getName());
         // discover any service promotions
         Map<ComponentServiceModel,CompositeServiceModel> servicePromotions = new HashMap<ComponentServiceModel,CompositeServiceModel>();
-        for (CompositeServiceModel compositeService : getConfig().getComposite().getServices()) {
-            ComponentServiceModel componentService = compositeService.getComponentService();
-            if (componentService != null) {
-                servicePromotions.put(componentService, compositeService);
-            }
-        }
-        // deploy services to each implementation found in the application
-        for (ComponentModel component : getConfig().getComposite().getComponents()) {
-            Activator activator = findActivator(component);
-            if (activator == null) {
-                throw new SwitchYardException("Activator not found for "
-                        + component.getImplementation().getType());
-            }
-            // register a service for each one declared in the component
-            for (ComponentServiceModel service : component.getServices()) {
-                _log.debug("Registering service " + service.getQName()
-                       + " for component " + component.getImplementation().getType() + " for deployment " + getName());
-                ExchangeHandler handler = activator.init(service.getQName(), service);
-                ServiceInterface serviceIntf = getComponentServiceInterface(service);
-                ServiceReference serviceRef = serviceIntf != null
-                        ? getDomain().registerService(service.getQName(), handler, serviceIntf)
-                        : getDomain().registerService(service.getQName(), handler);
-                // register any service promotions, avoiding duplicate service names
-                CompositeServiceModel promotion = servicePromotions.get(service);
-                if (promotion != null && !promotion.getQName().equals(service.getQName())) {
-                    if (serviceIntf != null) {
-                        getDomain().registerService(promotion.getQName(), handler, serviceIntf);
-                    } else {
-                        getDomain().registerService(promotion.getQName(), handler);
-                    }
+        if (getConfig().getComposite() != null) {
+            for (CompositeServiceModel compositeService : getConfig().getComposite().getServices()) {
+                ComponentServiceModel componentService = compositeService.getComponentService();
+                if (componentService != null) {
+                    servicePromotions.put(componentService, compositeService);
                 }
-                Activation activation = new Activation(serviceRef, activator);
-                activation.start();
-                _services.add(activation);
-                fireComponentDeployed(component);
+            }
+            // deploy services to each implementation found in the application
+            for (ComponentModel component : getConfig().getComposite().getComponents()) {
+                Activator activator = findActivator(component);
+                if (activator == null) {
+                    throw new SwitchYardException("Activator not found for "
+                            + component.getImplementation().getType());
+                }
+                // register a service for each one declared in the component
+                for (ComponentServiceModel service : component.getServices()) {
+                    _log.debug("Registering service " + service.getQName()
+                           + " for component " + component.getImplementation().getType() + " for deployment " + getName());
+                    ExchangeHandler handler = activator.init(service.getQName(), service);
+                    ServiceInterface serviceIntf = getComponentServiceInterface(service);
+                    ServiceReference serviceRef = serviceIntf != null
+                            ? getDomain().registerService(service.getQName(), handler, serviceIntf)
+                            : getDomain().registerService(service.getQName(), handler);
+                    // register any service promotions, avoiding duplicate service names
+                    CompositeServiceModel promotion = servicePromotions.get(service);
+                    if (promotion != null && !promotion.getQName().equals(service.getQName())) {
+                        if (serviceIntf != null) {
+                            getDomain().registerService(promotion.getQName(), handler, serviceIntf);
+                        } else {
+                            getDomain().registerService(promotion.getQName(), handler);
+                        }
+                    }
+                    Activation activation = new Activation(serviceRef, activator);
+                    activation.start();
+                    _services.add(activation);
+                    fireComponentDeployed(component);
+                }
             }
         }
         
@@ -343,43 +342,47 @@ public class Deployment extends AbstractDeployment {
     
     private void deployReferences() {
         _log.debug("Deploying references for deployment " + getName());
-        for (ComponentModel component : getConfig().getComposite().getComponents()) {
-            Activator activator = findActivator(component);
-            // register a service for each one declared in the component
-            for (ComponentReferenceModel reference : component.getReferences()) {
-                _log.debug("Registering reference " + reference.getQName()
-                       + " for component " + component.getImplementation().getType() + " for deployment " + getName());
-                ServiceReference service = getDomain().getService(reference.getQName());
-                if (service == null) {
-                    throw new SwitchYardException("Unable to activate reference, service not found: " 
-                            + reference.getQName());
+        if (getConfig().getComposite() != null) {
+            for (ComponentModel component : getConfig().getComposite().getComponents()) {
+                Activator activator = findActivator(component);
+                // register a service for each one declared in the component
+                for (ComponentReferenceModel reference : component.getReferences()) {
+                    _log.debug("Registering reference " + reference.getQName()
+                           + " for component " + component.getImplementation().getType() + " for deployment " + getName());
+                    ServiceReference service = getDomain().getService(reference.getQName());
+                    if (service == null) {
+                        throw new SwitchYardException("Unable to activate reference, service not found: " 
+                                + reference.getQName());
+                    }
+                    activator.init(reference.getQName(), reference);
+                    Activation activation = new Activation(service, activator);
+                    activation.start();
+                    _references.add(activation);
                 }
-                activator.init(reference.getQName(), reference);
-                Activation activation = new Activation(service, activator);
-                activation.start();
-                _references.add(activation);
             }
         }
     }
 
     private void deployServiceBindings() {
         _log.debug("Deploying service bindings for deployment " + getName());
-        // activate bindings for each service
-        for (CompositeServiceModel service : getConfig().getComposite().getServices()) {
-            for (BindingModel binding : service.getBindings()) {
-                _log.debug("Deploying binding " + binding.getType() + " for service " + service.getQName() + " for deployment " + getName());
-                Activator activator = findActivator(binding.getType());
-                ServiceReference serviceRef = getDomain().getService(service.getQName());
-                if (serviceRef == null) {
-                    throw new SwitchYardException("Unable to activate binding, service not found: "
-                            + service.getQName());
+        if (getConfig().getComposite() != null) {
+            // activate bindings for each service
+            for (CompositeServiceModel service : getConfig().getComposite().getServices()) {
+                for (BindingModel binding : service.getBindings()) {
+                    _log.debug("Deploying binding " + binding.getType() + " for service " + service.getQName() + " for deployment " + getName());
+                    Activator activator = findActivator(binding.getType());
+                    ServiceReference serviceRef = getDomain().getService(service.getQName());
+                    if (serviceRef == null) {
+                        throw new SwitchYardException("Unable to activate binding, service not found: "
+                                + service.getQName());
+                    }
+                    activator.init(serviceRef.getName(), service);
+                    Activation activation = new Activation(serviceRef, activator);
+                    activation.start();
+                    _serviceBindings.add(activation);
                 }
-                activator.init(serviceRef.getName(), service);
-                Activation activation = new Activation(serviceRef, activator);
-                activation.start();
-                _serviceBindings.add(activation);
+                fireServiceDeployed(service);
             }
-            fireServiceDeployed(service);
         }
     }
 
