@@ -18,6 +18,8 @@
  */
 package org.switchyard.as7.extension.deployment;
 
+import java.util.List;
+
 import org.jboss.as.ee.component.EEModuleDescription;
 import org.jboss.as.naming.context.NamespaceContextSelector;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
@@ -27,6 +29,7 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.weld.WeldDeploymentMarker;
 import org.jboss.as.weld.services.BeanManagerService;
 import org.jboss.logging.Logger;
+import org.jboss.modules.ModuleIdentifier;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController.Mode;
 import org.jboss.msc.service.ServiceName;
@@ -35,6 +38,7 @@ import org.jboss.msc.value.ImmediateValue;
 import org.switchyard.as7.extension.SwitchYardDeploymentMarker;
 import org.switchyard.as7.extension.services.SwitchYardService;
 import org.switchyard.as7.extension.services.SwitchYardServiceDomainManagerService;
+import org.switchyard.deploy.Component;
 import org.switchyard.deploy.ServiceDomainManager;
 
 /**
@@ -46,6 +50,15 @@ public class SwitchYardDeploymentProcessor implements DeploymentUnitProcessor {
 
     private static final Logger LOG = Logger.getLogger("org.switchyard");
 
+    private List<Component> _components;
+    /**
+     * Construct SwitchYard dependency processor with a list of component modules.
+     * 
+     * @param modules a list of component modules
+     */
+    public SwitchYardDeploymentProcessor(List<Component> components) {
+        _components = components;
+    }
     @Override
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         final DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
@@ -58,7 +71,7 @@ public class SwitchYardDeploymentProcessor implements DeploymentUnitProcessor {
                 (ServiceDomainManager) phaseContext.getServiceRegistry().getRequiredService(SwitchYardServiceDomainManagerService.SERVICE_NAME).getService().getValue();
 
         SwitchYardMetaData metaData = deploymentUnit.getAttachment(SwitchYardMetaData.ATTACHMENT_KEY);
-        SwitchYardDeployment deployment = new SwitchYardDeployment(deploymentUnit, metaData.geSwitchYardModel(), domainManager);
+        SwitchYardDeployment deployment = new SwitchYardDeployment(deploymentUnit, metaData.geSwitchYardModel(), _components, domainManager);
         SwitchYardService container = new SwitchYardService(deployment);
         final ServiceTarget serviceTarget = phaseContext.getServiceTarget();
         final ServiceName switchyardServiceName = deploymentUnit.getServiceName().append(SwitchYardService.SERVICE_NAME);

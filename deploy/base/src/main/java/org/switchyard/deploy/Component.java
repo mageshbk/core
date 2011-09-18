@@ -16,21 +16,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
  * MA  02110-1301, USA.
  */
-package org.switchyard.as7.extension;
+
+package org.switchyard.deploy;
+
+import org.switchyard.ServiceDomain;
+import org.switchyard.config.Configuration;
 
 /**
- * @author Magesh Kumar B <mageshbk@jboss.com> (C) 2011 Red Hat Inc.
- *
+ * Components allow components to participate in the deployment and configuration lifecycle of
+ * a SwitchYard application.
  */
-public interface CommonAttributes {
-
-    /**
-     * The component modules attribute.
-     */
-    String MODULES = "modules";
-
-    /**
-     * The environment properties attribute.
-     */
-    String PROPERTIES = "properties";
+public interface Component {
+    Activator getActivator(ServiceDomain domain);
+    String getName();
+    void init(Configuration config);
+    void destroy();
 }

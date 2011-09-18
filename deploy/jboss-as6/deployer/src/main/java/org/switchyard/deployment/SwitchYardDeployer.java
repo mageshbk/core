@@ -21,6 +21,10 @@ package org.switchyard.deployment;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.jboss.beans.metadata.spi.BeanMetaData;
@@ -30,8 +34,11 @@ import org.jboss.deployers.spi.deployer.DeploymentStages;
 import org.jboss.deployers.structure.spi.DeploymentUnit;
 import org.jboss.deployers.vfs.spi.deployer.AbstractSimpleVFSRealDeployer;
 import org.jboss.deployers.vfs.spi.structure.VFSDeploymentUnit;
+import org.switchyard.config.Configuration;
 import org.switchyard.config.model.ModelPuller;
 import org.switchyard.config.model.switchyard.SwitchYardModel;
+import org.switchyard.deploy.BaseComponent;
+import org.switchyard.deploy.Component;
 import org.switchyard.deploy.ServiceDomainManager;
 
 /**
@@ -44,6 +51,8 @@ public class SwitchYardDeployer extends AbstractSimpleVFSRealDeployer<SwitchYard
     private static final String BEAN_PREFIX = "switchyard";
 
     private ServiceDomainManager _domainManager;
+
+    private List<Component> _components;
 
     /**
      * No args constructor.
@@ -62,6 +71,30 @@ public class SwitchYardDeployer extends AbstractSimpleVFSRealDeployer<SwitchYard
         this._domainManager = domainManager;
     }
 
+    /**
+     * Set the {@link ServiceDomainManager} instance for the deployment.
+     * @param domainManager The domain manager.
+     */
+    public void setModules(Map<String, Configuration> modules) {
+        List<Component> components = new ArrayList<Component>();
+        Set<String> keys = modules.keySet();
+        for (String module : keys) {
+            try {
+                Class<? extends BaseComponent> componentClass = Class.forName(module + ".deploy.ComponentImpl").asSubclass(BaseComponent.class);
+                Component component = componentClass.newInstance();
+                component.init(modules.get(module));
+                components.add(component);
+            } catch (ClassNotFoundException e1) {
+                _log.error("Unable to load class " + module + ".deploy.ComponentImpl");
+            } catch (InstantiationException e2) {
+                _log.error("Unable to instantiate class " + module + ".deploy.ComponentImpl");
+            } catch (IllegalAccessException e3) {
+                _log.error("Unable to access constructor for " + module + ".deploy.ComponentImpl");
+            }
+        }
+        this._components = components;
+    }
+
     @Override
     public void deploy(VFSDeploymentUnit unit, SwitchYardMetaData metaData)
         throws DeploymentException {
@@ -73,6 +106,7 @@ public class SwitchYardDeployer extends AbstractSimpleVFSRealDeployer<SwitchYard
         }
         BeanMetaData beanMetaData = createBeanMetaData(unit, metaData);
         unit.addAttachment(BeanMetaData.class, beanMetaData);
+        unit.addAttachment("components", _components);
     }
     
     /**

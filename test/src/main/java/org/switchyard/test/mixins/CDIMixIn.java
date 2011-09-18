@@ -28,12 +28,18 @@ import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
 import org.jboss.weld.environment.se.events.ContainerInitialized;
 import org.junit.Assert;
+import org.switchyard.ServiceDomain;
 import org.switchyard.common.type.Classes;
+import org.switchyard.deploy.ActivatorLoader;
+import org.switchyard.deploy.Component;
 import org.switchyard.deploy.ServiceDomainManager;
 import org.switchyard.deploy.internal.AbstractDeployment;
 import org.switchyard.test.MockInitialContextFactory;
 import org.switchyard.test.SimpleTestDeployment;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 /**
@@ -75,7 +81,8 @@ public class CDIMixIn extends AbstractTestMixIn {
             try {
                 _simpleCdiDeployment = simpleCdiDeploymentType.newInstance();
                 _simpleCdiDeployment.setParentDeployment(deployment);
-                _simpleCdiDeployment.init(ServiceDomainManager.createDomain());
+                ServiceDomain domain = ServiceDomainManager.createDomain();
+                _simpleCdiDeployment.init(domain, ActivatorLoader.createActivators(domain));
                 _simpleCdiDeployment.start();
             } catch (Exception e) {
                 e.printStackTrace();

@@ -24,11 +24,11 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.parsing.ParseUtils.missingRequired;
 import static org.jboss.as.controller.parsing.ParseUtils.requireNoAttributes;
-import static org.jboss.as.controller.parsing.ParseUtils.requireNoContent;
 import static org.jboss.as.controller.parsing.ParseUtils.requireNoNamespaceAttribute;
 import static org.jboss.as.controller.parsing.ParseUtils.unexpectedAttribute;
 import static org.jboss.as.controller.parsing.ParseUtils.unexpectedElement;
 import static org.switchyard.as7.extension.CommonAttributes.MODULES;
+import static org.switchyard.as7.extension.CommonAttributes.PROPERTIES;
 
 import java.util.Collections;
 import java.util.List;
@@ -137,6 +137,12 @@ public class SwitchYardExtension implements Extension {
                                 subsytem.get(MODULES).set(modules);
                             }
                             break;
+                        case PROPERTIES: 
+                            ModelNode properties = parsePropertiesElement("", reader);
+                            if (properties != null) {
+                                subsytem.get(PROPERTIES).set(properties);
+                            }
+                            break;
                         default:
                             throw unexpectedElement(reader);
                     }
@@ -156,12 +162,29 @@ public class SwitchYardExtension implements Extension {
                 writer.writeStartElement(Element.MODULES.getLocalName());
                 Set<String> keys = modules.keys();
                 for (String current : keys) {
-                    writer.writeEmptyElement(Element.MODULE.getLocalName());
+                    writer.writeStartElement(Element.MODULE.getLocalName());
                     writer.writeAttribute(Attribute.IDENTIFIER.getLocalName(), current);
+                    writeProperties(modules.get(current), writer);
+                    writer.writeEndElement();
                 }
                 writer.writeEndElement();
             }
+            writeProperties(node, writer);
             writer.writeEndElement();
+        }
+
+        public void writeProperties(final ModelNode node, final XMLExtendedStreamWriter writer) throws XMLStreamException {
+            if (has(node, PROPERTIES)) {
+                ModelNode properties = node.get(PROPERTIES);
+                writer.writeStartElement(Element.PROPERTIES.getLocalName());
+                Set<String> keys = properties.keys();
+                for (String current : keys) {
+                    writer.writeStartElement(current);
+                    writer.writeCharacters(properties.get(current).asString());
+                    writer.writeEndElement();
+                }
+                writer.writeEndElement();
+            }
         }
 
         private boolean has(ModelNode node, String name) {
@@ -204,9 +227,20 @@ public class SwitchYardExtension implements Extension {
                         }
 
                         ModelNode module = new ModelNode();
+                        while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
+                            final Element element1 = Element.forName(reader.getLocalName());
+                            switch (element1) {
+                                case PROPERTIES: 
+                                    ModelNode properties = parsePropertiesElement(identifier, reader);
+                                    if (properties != null) {
+                                        module.get(PROPERTIES).set(properties);
+                                    }
+                                    break;
+                                default:
+                                    throw unexpectedElement(reader);
+                            }
+                        }
                         modules.get(identifier).set(module);
-
-                        requireNoContent(reader);
                     } else {
                         throw unexpectedElement(reader);
                     }
@@ -214,6 +248,34 @@ public class SwitchYardExtension implements Extension {
             }
 
             return modules;
+        }
+
+        ModelNode parsePropertiesElement(String identifier, XMLExtendedStreamReader reader) throws XMLStreamException {
+
+            // Handle attributes
+            requireNoAttributes(reader);
+
+            ModelNode properties = new ModelNode();
+            StringBuffer configModel = new StringBuffer();
+
+            // Handle elements
+            while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
+                if (reader.getNamespaceURI().equals(SwitchYardExtension.NAMESPACE)) {
+                    final Element element = Element.forName(reader.getLocalName());
+                    String name = reader.getLocalName();
+                    String value = reader.getElementText();
+                    if (properties.has(name)) {
+                        throw new XMLStreamException(element.getLocalName() + " already declared", reader.getLocation());
+                    }
+
+                    ModelNode property = new ModelNode();
+                    property.set(value);
+                    properties.get(name).set(property);
+                    configModel.append(element.toString());
+                }
+            }
+
+            return properties;
         }
     }
 
